@@ -33,7 +33,10 @@
       "Bash(python3 *)",
       "Bash(curl -v http://localhost:5000/api/showtimes)",
       "Bash(railway --version)",
-      "Bash(git config *)"
+      "Bash(git config *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ]
   }
 }
