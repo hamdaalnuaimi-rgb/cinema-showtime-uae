@@ -32,7 +32,8 @@
       "Bash(grep -oE '\\(VOX|Reel|Novo|[0-9]{1,2}:[0-9]{2}\\\\s*\\(AM|PM|am|pm\\)\\)')",
       "Bash(python3 *)",
       "Bash(curl -v http://localhost:5000/api/showtimes)",
-      "Bash(railway --version)"
+      "Bash(railway --version)",
+      "Bash(git config *)"
     ]
   }
 }
