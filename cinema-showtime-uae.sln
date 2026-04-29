@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cinema-showtime-uae", "cinema-showtime-uae\cinema-showtime-uae.csproj", "{056E4588-6BCA-4970-8366-2D29C8C1C864}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{056E4588-6BCA-4970-8366-2D29C8C1C864}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{056E4588-6BCA-4970-8366-2D29C8C1C864}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{056E4588-6BCA-4970-8366-2D29C8C1C864}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{056E4588-6BCA-4970-8366-2D29C8C1C864}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
