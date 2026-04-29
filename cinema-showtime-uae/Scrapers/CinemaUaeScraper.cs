@@ -130,8 +130,9 @@ public class CinemaUaeScraper : ICinemaScraper
         };
     }
 
+    // [^<]+ stops the title capture at the first HTML tag, preventing runaway matches
     private static readonly Regex _movieHeading = new(
-        @"<h4>\s*(.+?)\s*Showtimes:\s*</h4>(.*?)(?=<h4>|<hr\b|</section|</article|$)",
+        @"<h4>\s*([^<]+?)\s*Showtimes:\s*</h4>(.*?)(?=<h4>|<hr\b|</section|</article|$)",
         RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
     private static readonly Regex _timePattern = new(
