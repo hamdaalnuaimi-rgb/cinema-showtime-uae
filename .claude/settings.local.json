@@ -36,7 +36,10 @@
       "Bash(git config *)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(curl -sL --max-time 15 \"https://cinemauae.com/dubai/dubai-mall-cinema/?date=2026-05-01\")",
+      "Bash(curl -sL --max-time 15 \"https://cinemauae.com/dubai/showtimes/?date=2026-05-01\")",
+      "Bash(curl -sL --max-time 15 \"https://cinemauae.com/dubai/mall-of-the-emirates-cinema/\")"
     ]
   }
 }

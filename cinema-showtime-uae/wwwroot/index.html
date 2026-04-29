@@ -37,6 +37,38 @@
     header h1 span { color: #f5a623; }
     #dateDisplay { font-size: 0.85rem; color: #aab4d0; margin-top: 2px; }
 
+    /* ── Date tabs ── */
+    .date-tabs {
+      background: #1a1a3e;
+      padding: 0 24px;
+      display: flex;
+      gap: 0;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    .date-tabs-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      gap: 4px;
+      padding: 8px 0;
+      width: 100%;
+    }
+    .date-tab {
+      background: transparent;
+      border: 1.5px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      color: #aab4d0;
+      padding: 7px 18px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .15s;
+    }
+    .date-tab:hover { border-color: #f5a623; color: #f5a623; }
+    .date-tab.active { background: #f5a623; border-color: #f5a623; color: #1a1a2e; font-weight: 700; }
+
     /* ── Filter bar ── */
     .filters {
       background: #fff;
@@ -224,6 +256,10 @@
   </div>
 </header>
 
+<div class="date-tabs">
+  <div class="date-tabs-inner" id="dateTabs"></div>
+</div>
+
 <div class="filters">
   <div class="filters-inner">
     <div class="filter-group">
@@ -248,8 +284,9 @@
 
 <script>
   let rawData = null;
+  let currentOffset = 0;
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
   function parseTime(t) {
     const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i);
@@ -263,6 +300,37 @@
 
   function sortTimes(times) {
     return [...times].sort((a, b) => parseTime(a) - parseTime(b));
+  }
+
+  function esc(str) {
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function dateLabel(offset) {
+    const d = new Date();
+    d.setDate(d.getDate() + offset);
+    if (offset === 0) return 'Today';
+    if (offset === 1) return 'Tomorrow';
+    return d.toLocaleDateString('en-AE', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
+  // ── Date tabs ─────────────────────────────────────────────────────────────
+
+  function buildDateTabs() {
+    const container = document.getElementById('dateTabs');
+    container.innerHTML = [0, 1, 2].map(i => `
+      <button class="date-tab${i === currentOffset ? ' active' : ''}" data-offset="${i}">
+        ${dateLabel(i)}
+      </button>`).join('');
+
+    container.querySelectorAll('.date-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentOffset = parseInt(btn.dataset.offset);
+        loadData();
+      });
+    });
   }
 
   // ── Populate dropdowns ────────────────────────────────────────────────────
@@ -280,16 +348,25 @@
       }
     }
 
-    const citySelect = document.getElementById('cityFilter');
+    const prevCity  = document.getElementById('cityFilter').value;
+    const prevMovie = document.getElementById('movieFilter').value;
+
+    const citySelect  = document.getElementById('cityFilter');
     const movieSelect = document.getElementById('movieFilter');
+
+    citySelect.innerHTML  = '<option value="">All Cities</option>';
+    movieSelect.innerHTML = '<option value="">All Movies</option>';
 
     [...cities].sort().forEach(c => {
       citySelect.appendChild(Object.assign(document.createElement('option'), { value: c, textContent: c }));
     });
-
     [...movies].sort().forEach(m => {
       movieSelect.appendChild(Object.assign(document.createElement('option'), { value: m, textContent: m }));
     });
+
+    // Restore previous selections if they still exist
+    if (prevCity  && [...citySelect.options].some(o => o.value === prevCity))   citySelect.value  = prevCity;
+    if (prevMovie && [...movieSelect.options].some(o => o.value === prevMovie)) movieSelect.value = prevMovie;
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -299,8 +376,7 @@
     const movie = document.getElementById('movieFilter').value;
     const container = document.getElementById('results');
 
-    let totalLocations = 0;
-    let totalChains    = 0;
+    let totalLocations = 0, totalChains = 0;
     const html = [];
 
     for (const chain of rawData.cinemas) {
@@ -313,8 +389,7 @@
         if (!locs.length) continue;
 
         const rows = locs.map(l => {
-          const badges = sortTimes(l.showtimes)
-            .map(t => `<span class="time-badge">${t}</span>`).join('');
+          const badges = sortTimes(l.showtimes).map(t => `<span class="time-badge">${t}</span>`).join('');
           return `
             <div class="location-row">
               <div class="location-info">
@@ -348,43 +423,36 @@
     }
 
     document.getElementById('statsBar').textContent =
-      totalChains
-        ? `${totalLocations} location${totalLocations !== 1 ? 's' : ''} · ${totalChains} chain${totalChains !== 1 ? 's' : ''}`
-        : '';
+      totalChains ? `${totalLocations} location${totalLocations !== 1 ? 's' : ''} · ${totalChains} chain${totalChains !== 1 ? 's' : ''}` : '';
 
-    if (!html.length) {
-      container.innerHTML = `
-        <div class="no-results">
-          <div class="icon">🎭</div>
-          <p>No showtimes found for the selected filters.</p>
-        </div>`;
-    } else {
-      container.innerHTML = html.join('');
-    }
-  }
-
-  function esc(str) {
-    return String(str)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    container.innerHTML = html.length ? html.join('') : `
+      <div class="no-results">
+        <div class="icon">🎭</div>
+        <p>No showtimes found for the selected filters.</p>
+      </div>`;
   }
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
 
-  async function init() {
+  async function loadData() {
+    buildDateTabs();
+
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('results').style.display = 'none';
+
     try {
-      const res = await fetch('/api/showtimes');
+      const res = await fetch(`/api/showtimes?dateOffset=${currentOffset}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       rawData = await res.json();
 
-      const d = new Date(rawData.date);
+      const d = new Date(rawData.date + 'T00:00:00');
       document.getElementById('dateDisplay').textContent =
-        d.toLocaleDateString('en-AE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Dubai' });
+        d.toLocaleDateString('en-AE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
       populateFilters(rawData);
 
       document.getElementById('loading').style.display = 'none';
-      document.getElementById('results').style.display  = 'block';
+      document.getElementById('results').style.display = 'block';
       render();
     } catch (err) {
       document.getElementById('loading').innerHTML =
@@ -395,7 +463,7 @@
   document.getElementById('cityFilter').addEventListener('change', render);
   document.getElementById('movieFilter').addEventListener('change', render);
 
-  init();
+  loadData();
 </script>
 </body>
 </html>

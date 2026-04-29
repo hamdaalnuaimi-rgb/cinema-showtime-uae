@@ -22,7 +22,7 @@ public class CinemaUaeScraper : ICinemaScraper
         _http = factory.CreateClient("CinemaUae");
     }
 
-    public async Task<CinemaResult> ScrapeAsync(CancellationToken ct = default)
+    public async Task<CinemaResult> ScrapeAsync(int dateOffset = 0, CancellationToken ct = default)
     {
         var chainHtml = await _http.GetStringAsync($"{BaseUrl}/{_slug}/", ct);
         var locationUrls = ExtractLocationUrls(chainHtml);
@@ -35,7 +35,8 @@ public class CinemaUaeScraper : ICinemaScraper
             try
             {
                 var html = await _http.GetStringAsync(loc.Url, ct);
-                return (loc.Name, loc.City, Movies: ExtractMovies(html));
+                var tabHtml = ExtractTabContent(html, dateOffset);
+                return (loc.Name, loc.City, Movies: ExtractMovies(tabHtml));
             }
             catch { return (loc.Name, loc.City, Movies: new List<(string Title, List<string> Times)>()); }
             finally { sem.Release(); }
@@ -66,6 +67,19 @@ public class CinemaUaeScraper : ICinemaScraper
             .ToList();
 
         return new CinemaResult(ChainName, movieResults);
+    }
+
+    // Each cinema page embeds 3 day-tabs: showtimestab1=today, tab2=tomorrow, tab3=day after
+    private static string ExtractTabContent(string html, int dateOffset)
+    {
+        var tabId   = $"showtimestab{dateOffset + 1}";
+        var nextId  = $"showtimestab{dateOffset + 2}";
+
+        var start = html.IndexOf($"id=\"{tabId}\"", StringComparison.Ordinal);
+        if (start < 0) return html;
+
+        var end = html.IndexOf($"id=\"{nextId}\"", start, StringComparison.Ordinal);
+        return end < 0 ? html[start..] : html[start..end];
     }
 
     private List<(string Name, string City, string Url)> ExtractLocationUrls(string html)

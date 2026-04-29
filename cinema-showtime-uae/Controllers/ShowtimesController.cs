@@ -15,9 +15,9 @@ public class ShowtimesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> Get(CancellationToken ct)
+    public async Task<IActionResult> Get([FromQuery] int dateOffset = 0, CancellationToken ct = default)
     {
-        var result = await _aggregator.GetTodayShowtimesAsync(ct);
+        var result = await _aggregator.GetShowtimesAsync(dateOffset, ct);
         return Ok(result);
     }
 }

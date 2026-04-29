@@ -15,39 +15,39 @@ public class ShowtimeAggregatorService
         _cache = cache;
     }
 
-    public async Task<ShowtimesResponse> GetTodayShowtimesAsync(CancellationToken ct = default)
+    public async Task<ShowtimesResponse> GetShowtimesAsync(int dateOffset = 0, CancellationToken ct = default)
     {
-        // UAE is UTC+4
-        var today = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(4));
-        var cacheKey = $"showtimes_{today:yyyy-MM-dd}";
+        dateOffset = Math.Clamp(dateOffset, 0, 2);
+
+        var date = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(4)).AddDays(dateOffset);
+        var cacheKey = $"showtimes_{date:yyyy-MM-dd}";
 
         if (_cache.TryGetValue(cacheKey, out ShowtimesResponse? cached))
             return cached!;
 
-        var tasks = _scrapers.Select(scraper => RunScraperAsync(scraper, ct)).ToArray();
+        var tasks = _scrapers.Select(scraper => RunScraperAsync(scraper, dateOffset, ct)).ToArray();
         var results = await Task.WhenAll(tasks);
 
         var cinemas = results.Where(r => r.Result != null).Select(r => r.Result!).ToList();
-        var errors = results.Where(r => r.Error != null).Select(r => r.Error!).ToList();
+        var errors  = results.Where(r => r.Error  != null).Select(r => r.Error!).ToList();
 
         var response = new ShowtimesResponse(
-            Date: today.ToString("yyyy-MM-dd"),
+            Date: date.ToString("yyyy-MM-dd"),
             GeneratedAt: DateTime.UtcNow,
             Cinemas: cinemas,
             Errors: errors
         );
 
         _cache.Set(cacheKey, response, TimeSpan.FromHours(24));
-
         return response;
     }
 
     private static async Task<(CinemaResult? Result, string? Error)> RunScraperAsync(
-        ICinemaScraper scraper, CancellationToken ct)
+        ICinemaScraper scraper, int dateOffset, CancellationToken ct)
     {
         try
         {
-            var result = await scraper.ScrapeAsync(ct);
+            var result = await scraper.ScrapeAsync(dateOffset, ct);
             return (result, null);
         }
         catch (Exception ex)

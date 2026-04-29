@@ -58,7 +58,7 @@ _ = Task.Run(async () =>
     await Task.Delay(TimeSpan.FromSeconds(3));
     using var scope = app.Services.CreateScope();
     var svc = scope.ServiceProvider.GetRequiredService<ShowtimeAggregatorService>();
-    await svc.GetTodayShowtimesAsync();
+    await svc.GetShowtimesAsync(0);
 });
 
 app.Run();
