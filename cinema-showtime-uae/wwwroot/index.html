@@ -235,6 +235,12 @@
       font-weight: 500;
       white-space: nowrap;
     }
+    .time-badge.past {
+      background: #f1f5f9;
+      color: #94a3b8;
+      border-color: #e2e8f0;
+      text-decoration: line-through;
+    }
 
     @media (max-width: 600px) {
       header h1 { font-size: 1.2rem; }
@@ -388,8 +394,14 @@
         const locs = m.locations.filter(l => !city || l.city === city);
         if (!locs.length) continue;
 
+        const nowUAE = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Dubai' }));
+        const nowMinutes = nowUAE.getHours() * 60 + nowUAE.getMinutes();
+
         const rows = locs.map(l => {
-          const badges = sortTimes(l.showtimes).map(t => `<span class="time-badge">${t}</span>`).join('');
+          const badges = sortTimes(l.showtimes).map(t => {
+            const isPast = currentOffset === 0 && parseTime(t) < nowMinutes;
+            return `<span class="time-badge${isPast ? ' past' : ''}">${t}</span>`;
+          }).join('');
           return `
             <div class="location-row">
               <div class="location-info">
