@@ -196,6 +196,7 @@
       font-size: 1.15rem;
       font-weight: 700;
       color: #0f0f1a;
+      transition: color .4s;
     }
     .chain-count {
       background: #e2e8f0;
@@ -204,12 +205,28 @@
       font-weight: 600;
       padding: 2px 8px;
       border-radius: 20px;
+      transition: background .4s, color .4s;
     }
     .chain-divider {
       flex: 1;
       height: 1px;
       background: linear-gradient(to right, #cbd5e1, transparent);
+      transition: background .4s;
     }
+    .chain-toggle { transition: color .4s; }
+
+    body.has-poster .chain-name {
+      color: #fff;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+    }
+    body.has-poster .chain-count {
+      background: rgba(255,255,255,0.15);
+      color: #e2e8f0;
+    }
+    body.has-poster .chain-divider {
+      background: linear-gradient(to right, rgba(255,255,255,0.25), transparent);
+    }
+    body.has-poster .chain-toggle { color: rgba(255,255,255,0.6); }
 
     /* ── Movie block ── */
     .movie-block {
@@ -399,7 +416,8 @@
         currentOffset = parseInt(btn.dataset.offset);
         document.getElementById('movieFilter').value = '';
         document.getElementById('posterBg').classList.remove('visible');
-                loadData();
+        document.body.classList.remove('has-poster');
+        loadData();
       });
     });
   }
@@ -568,7 +586,7 @@
 
   async function updatePoster(title) {
     const bg = document.getElementById('posterBg');
-    if (!title) { bg.classList.remove('visible'); return; }
+    if (!title) { bg.classList.remove('visible'); document.body.classList.remove('has-poster'); return; }
     try {
       // Search Wikipedia for the movie page
       const searchRes = await fetch(
@@ -587,7 +605,11 @@
 
       bg.style.backgroundImage = `url("${imgUrl}")`;
       bg.classList.add('visible');
-    } catch { bg.classList.remove('visible'); }
+      document.body.classList.add('has-poster');
+    } catch {
+      bg.classList.remove('visible');
+      document.body.classList.remove('has-poster');
+    }
   }
 
   document.getElementById('cityFilter').addEventListener('change', render);
