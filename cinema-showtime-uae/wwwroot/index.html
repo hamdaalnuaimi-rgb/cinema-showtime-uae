@@ -247,10 +247,16 @@
       color: #94a3b8;
       margin-top: 1px;
     }
-    .showtimes {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
+    .showtimes { display: flex; flex-direction: column; gap: 5px; }
+    .type-row { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
+    .type-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: #64748b;
+      white-space: nowrap;
+      min-width: 70px;
     }
     .time-badge {
       background: #eff6ff;
@@ -430,9 +436,18 @@
         const nowMinutes = nowUAE.getHours() * 60 + nowUAE.getMinutes();
 
         const rows = locs.map(l => {
-          const badges = sortTimes(l.showtimes).map(t => {
-            const isPast = currentOffset === 0 && parseTime(t) < nowMinutes;
-            return `<span class="time-badge${isPast ? ' past' : ''}">${t}</span>`;
+          // Group by type, preserving server sort order within each type
+          const byType = {};
+          for (const s of l.showtimes) {
+            const type = s.type || 'Standard';
+            (byType[type] = byType[type] || []).push(s);
+          }
+          const typeRows = Object.entries(byType).map(([type, entries]) => {
+            const badges = entries.map(s => {
+              const isPast = currentOffset === 0 && parseTime(s.time) < nowMinutes;
+              return `<span class="time-badge${isPast ? ' past' : ''}">${esc(s.time)}</span>`;
+            }).join('');
+            return `<div class="type-row"><span class="type-label">${esc(type)}</span>${badges}</div>`;
           }).join('');
           return `
             <div class="location-row">
@@ -440,7 +455,7 @@
                 <div class="location-name">${esc(l.name)}</div>
                 <div class="location-city">${esc(l.city)}</div>
               </div>
-              <div class="showtimes">${badges}</div>
+              <div class="showtimes">${typeRows}</div>
             </div>`;
         }).join('');
 

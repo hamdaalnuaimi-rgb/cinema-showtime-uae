@@ -38,31 +38,35 @@ public class CinemaUaeScraper : ICinemaScraper
                 var tabHtml = ExtractTabContent(html, dateOffset);
                 return (loc.Name, loc.City, Movies: ExtractMovies(tabHtml));
             }
-            catch { return (loc.Name, loc.City, Movies: new List<(string Title, List<string> Times)>()); }
+            catch { return (loc.Name, loc.City, Movies: new List<(string Title, List<ShowtimeEntry> Showtimes)>()); }
             finally { sem.Release(); }
         });
 
         var locationResults = await Task.WhenAll(locationTasks);
 
         // Group: movie → (locationName, city) → merged+deduplicated showtimes
-        var movieMap = new Dictionary<string, Dictionary<(string Name, string City), SortedSet<string>>>(StringComparer.OrdinalIgnoreCase);
+        var movieMap = new Dictionary<string, Dictionary<(string Name, string City), HashSet<ShowtimeEntry>>>(StringComparer.OrdinalIgnoreCase);
         foreach (var (locationName, city, movies) in locationResults)
         {
-            foreach (var (title, times) in movies)
+            foreach (var (title, showtimes) in movies)
             {
                 if (!movieMap.TryGetValue(title, out var locMap))
                     movieMap[title] = locMap = new();
                 var key = (locationName, city);
                 if (!locMap.TryGetValue(key, out var timeSet))
-                    locMap[key] = timeSet = new(StringComparer.OrdinalIgnoreCase);
-                foreach (var t in times) timeSet.Add(t);
+                    locMap[key] = timeSet = new();
+                foreach (var s in showtimes) timeSet.Add(s);
             }
         }
 
         var movieResults = movieMap
             .Select(kv => new MovieResult(
                 kv.Key,
-                kv.Value.Select(loc => new LocationResult(loc.Key.Name, loc.Key.City, [.. loc.Value])).ToList()))
+                kv.Value.Select(loc => new LocationResult(
+                    loc.Key.Name,
+                    loc.Key.City,
+                    loc.Value.OrderBy(s => ParseMinutes(s.Time)).ToList()
+                )).ToList()))
             .OrderBy(m => m.Title)
             .ToList();
 
@@ -142,27 +146,56 @@ public class CinemaUaeScraper : ICinemaScraper
         @"<h4>\s*([^<]+?)\s*Showtimes:\s*</h4>(.*?)(?=<h4>|<hr\b|</section|</article|$)",
         RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
-    private static readonly Regex _timePattern = new(
-        @">(\d{1,2}:\d{2}\s*[AP]M)\s*<",
+    private static readonly Regex _buttonBlock = new(
+        @"<button\b[^>]*\bbtn-timings\b[^>]*>(.*?)</button>",
+        RegexOptions.Singleline | RegexOptions.IgnoreCase);
+
+    private static readonly Regex _timeInButton = new(
+        @"(\d{1,2}:\d{2}\s*[AP]M)",
         RegexOptions.IgnoreCase);
 
-    private static List<(string Title, List<string> Times)> ExtractMovies(string html)
+    private static readonly Regex _typeInButton = new(
+        @"<small>\s*([^<]+?)\s*</small>",
+        RegexOptions.IgnoreCase);
+
+    private static List<(string Title, List<ShowtimeEntry> Showtimes)> ExtractMovies(string html)
     {
-        var results = new List<(string, List<string>)>();
+        var results = new List<(string, List<ShowtimeEntry>)>();
 
         foreach (Match m in _movieHeading.Matches(html))
         {
             var title = m.Groups[1].Value.Trim();
             var block = m.Groups[2].Value;
 
-            var times = _timePattern.Matches(block)
-                .Select(t => t.Groups[1].Value.Trim())
-                .ToList();
+            var showtimes = new List<ShowtimeEntry>();
+            foreach (Match btn in _buttonBlock.Matches(block))
+            {
+                var btnHtml = btn.Groups[1].Value;
+                var timeMatch = _timeInButton.Match(btnHtml);
+                if (!timeMatch.Success) continue;
+                var time = timeMatch.Groups[1].Value.Trim();
+                var typeMatch = _typeInButton.Match(btnHtml);
+                var type = typeMatch.Success ? typeMatch.Groups[1].Value.Trim() : "";
+                showtimes.Add(new ShowtimeEntry(time, type));
+            }
 
-            if (times.Count > 0)
-                results.Add((title, times));
+            if (showtimes.Count > 0)
+                results.Add((title, showtimes));
         }
 
         return results;
+    }
+
+    private static readonly Regex _parseTime = new(@"(\d+):(\d+)\s*(AM|PM)", RegexOptions.IgnoreCase);
+    private static int ParseMinutes(string t)
+    {
+        var m = _parseTime.Match(t);
+        if (!m.Success) return 0;
+        var h = int.Parse(m.Groups[1].Value);
+        var min = int.Parse(m.Groups[2].Value);
+        var pm = m.Groups[3].Value.Equals("PM", StringComparison.OrdinalIgnoreCase);
+        if (pm && h != 12) h += 12;
+        if (!pm && h == 12) h = 0;
+        return h * 60 + min;
     }
 }
