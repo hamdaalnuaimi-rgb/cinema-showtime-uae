@@ -250,13 +250,15 @@
     .showtimes { display: flex; flex-direction: column; gap: 5px; }
     .type-row { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
     .type-label {
-      font-size: 0.7rem;
+      display: inline-block;
+      font-size: 0.68rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.4px;
-      color: #64748b;
+      letter-spacing: 0.5px;
       white-space: nowrap;
-      min-width: 70px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      color: #fff;
     }
     .time-badge {
       background: #eff6ff;
@@ -341,6 +343,30 @@
 
   function sortTimes(times) {
     return [...times].sort((a, b) => parseTime(a) - parseTime(b));
+  }
+
+  const TYPE_COLORS = {
+    'gold':        '#b8860b',
+    'gold max':    '#b8860b',
+    'imax':        '#1d4ed8',
+    'imax 2d':     '#1d4ed8',
+    'imax 3d':     '#1e40af',
+    '4dx':         '#dc2626',
+    '4dx 2d':      '#dc2626',
+    '4dx 3d':      '#b91c1c',
+    'screenx':     '#ea580c',
+    'vip':         '#7c3aed',
+    'premier':     '#6d28d9',
+    'premiere':    '#6d28d9',
+    'max':         '#0891b2',
+    'kids':        '#16a34a',
+    'outdoor':     '#0f766e',
+    'standard':    '#475569',
+    'theatre':     '#475569',
+  };
+
+  function typeColor(type) {
+    return TYPE_COLORS[type.toLowerCase()] ?? '#64748b';
   }
 
   function esc(str) {
@@ -447,7 +473,7 @@
               const isPast = currentOffset === 0 && parseTime(s.time) < nowMinutes;
               return `<span class="time-badge${isPast ? ' past' : ''}">${esc(s.time)}</span>`;
             }).join('');
-            return `<div class="type-row"><span class="type-label">${esc(type)}</span>${badges}</div>`;
+            return `<div class="type-row"><span class="type-label" style="background:${typeColor(type)}">${esc(type)}</span>${badges}</div>`;
           }).join('');
           return `
             <div class="location-row">
