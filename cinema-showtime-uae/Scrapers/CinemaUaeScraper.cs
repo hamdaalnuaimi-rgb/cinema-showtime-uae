@@ -100,13 +100,20 @@ public class CinemaUaeScraper : ICinemaScraper
 
             if (!seen.Add(href)) continue;
 
-            // Strip chain prefix ("Vox X Cinema") or chain suffix ("X Cinema - Vox")
+            // Strip chain prefix ("Vox X Cinema") or chain suffix ("X Cinema – Roxy" / "X Cinema - Chain")
             var name = text;
             if (name.StartsWith(_textPrefix, StringComparison.OrdinalIgnoreCase))
                 name = name[_textPrefix.Length..].Trim();
-            var dashSuffix = " - " + _textPrefix.TrimEnd();
-            if (name.EndsWith(dashSuffix, StringComparison.OrdinalIgnoreCase))
-                name = name[..^dashSuffix.Length].Trim();
+            var chainName = _textPrefix.TrimEnd();
+            foreach (var sep in new[] { " – ", " - " })
+            {
+                var suffix = sep + chainName;
+                if (name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                {
+                    name = name[..^suffix.Length].Trim();
+                    break;
+                }
+            }
             if (name.EndsWith(" Cinema", StringComparison.OrdinalIgnoreCase))
                 name = name[..^7].Trim();
 

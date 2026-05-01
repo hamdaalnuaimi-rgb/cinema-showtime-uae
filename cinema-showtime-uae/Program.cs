@@ -26,7 +26,7 @@ builder.Services.AddHttpClient("CinemaUae", c =>
     ("VOX Cinemas",    "vox",          "Vox "),
     ("Reel Cinemas",   "reel",         "Reel "),
     ("Novo Cinemas",   "novo",         "Novo "),
-    ("Roxy Cinemas",   "roxy-cinemas", "Roxy "),
+    ("Roxy Cinemas",   "roxy-cinemas", "Roxy"),
     ("Star Cinemas",   "star",         "Star "),
     ("Cinemacity",     "cinemacity",   "Cinemacity "),
     ("Cinemax",        "cinemax",      "Cinemax "),
