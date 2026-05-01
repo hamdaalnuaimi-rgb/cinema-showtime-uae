@@ -162,7 +162,17 @@
       align-items: center;
       gap: 10px;
       margin-bottom: 14px;
+      cursor: pointer;
+      user-select: none;
     }
+    .chain-toggle {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      transition: transform .2s;
+      flex-shrink: 0;
+    }
+    .chain-section.collapsed .chain-toggle { transform: rotate(-90deg); }
+    .chain-section.collapsed .chain-body { display: none; }
     .chain-name {
       font-size: 1.15rem;
       font-weight: 700;
@@ -291,6 +301,7 @@
 <script>
   let rawData = null;
   let currentOffset = 0;
+  const collapsedChains = new Set();
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -423,14 +434,18 @@
       if (!movieBlocks.length) continue;
       totalChains++;
 
+      const isCollapsed = collapsedChains.has(chain.chain);
       html.push(`
-        <div class="chain-section">
+        <div class="chain-section${isCollapsed ? ' collapsed' : ''}" data-chain="${esc(chain.chain)}">
           <div class="chain-header">
+            <span class="chain-toggle">▾</span>
             <span class="chain-name">${esc(chain.chain)}</span>
             <span class="chain-count">${movieBlocks.length} movie${movieBlocks.length !== 1 ? 's' : ''}</span>
             <div class="chain-divider"></div>
           </div>
-          ${movieBlocks.join('')}
+          <div class="chain-body">
+            ${movieBlocks.join('')}
+          </div>
         </div>`);
     }
 
@@ -442,6 +457,20 @@
         <div class="icon">🎭</div>
         <p>No showtimes found for the selected filters.</p>
       </div>`;
+
+    container.querySelectorAll('.chain-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const section = header.closest('.chain-section');
+        const name = section.dataset.chain;
+        if (collapsedChains.has(name)) {
+          collapsedChains.delete(name);
+          section.classList.remove('collapsed');
+        } else {
+          collapsedChains.add(name);
+          section.classList.add('collapsed');
+        }
+      });
+    });
   }
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
