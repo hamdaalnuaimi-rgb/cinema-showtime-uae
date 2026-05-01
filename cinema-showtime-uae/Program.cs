@@ -20,18 +20,19 @@ builder.Services.AddHttpClient("CinemaUae", c =>
 });
 
 // Register one scraper per UAE cinema chain
-// Args: (displayName, cinemauae.com slug, text prefix used in link anchor text)
+// Args: (displayName, cinemauae.com slug, chain keyword in anchor text)
+// Trailing spaces omitted so suffix-style links ("X Cinema - Chain") are matched too
 (string Name, string Slug, string Prefix)[] chains =
 [
-    ("VOX Cinemas",    "vox",          "Vox "),
-    ("Reel Cinemas",   "reel",         "Reel "),
-    ("Novo Cinemas",   "novo",         "Novo "),
+    ("VOX Cinemas",    "vox",          "Vox"),
+    ("Reel Cinemas",   "reel",         "Reel"),
+    ("Novo Cinemas",   "novo",         "Novo"),
     ("Roxy Cinemas",   "roxy-cinemas", "Roxy"),
-    ("Star Cinemas",   "star",         "Star "),
-    ("Cinemacity",     "cinemacity",   "Cinemacity "),
-    ("Cinemax",        "cinemax",      "Cinemax "),
-    ("Cinepolis",      "cinepolis",    "Cinepolis "),
-    ("Cine Royal",     "cineroyal",    "Cine Royal "),
+    ("Star Cinemas",   "star",         "Star"),
+    ("Cinemacity",     "cinemacity",   "Cinemacity"),
+    ("Cinemax",        "cinemax",      "Cinemax"),
+    ("Cinepolis",      "cinepolis",    "Cinepolis"),
+    ("Cine Royal",     "cineroyal",    "Cine Royal"),
 ];
 
 foreach (var (name, slug, prefix) in chains)
