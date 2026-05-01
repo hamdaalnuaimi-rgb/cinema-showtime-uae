@@ -12,18 +12,17 @@
       background: #f0f2f5;
       color: #1a1a2e;
       min-height: 100vh;
-      transition: background .5s ease;
     }
-    body.has-poster { background: rgba(10, 10, 20, 0.75); }
 
     /* ── Poster background ── */
+    /* z-index: 0 sits above the body canvas but below content (z-index: 1) */
     #posterBg {
       position: fixed;
       inset: 0;
-      z-index: -1;
+      z-index: 0;
       background-size: cover;
       background-position: center;
-      filter: blur(28px) brightness(0.35) saturate(1.4);
+      filter: blur(28px) brightness(0.3) saturate(1.4);
       transform: scale(1.08);
       opacity: 0;
       transition: opacity .5s ease;
@@ -85,6 +84,9 @@
     }
     .date-tab:hover { border-color: #f5a623; color: #f5a623; }
     .date-tab.active { background: #f5a623; border-color: #f5a623; color: #1a1a2e; font-weight: 700; }
+
+    /* Lift content above posterBg (z-index: 0). Header is already sticky z-index:100. */
+    .date-tabs, .filters, main { position: relative; z-index: 1; }
 
     /* ── Filter bar ── */
     .filters {
@@ -397,8 +399,7 @@
         currentOffset = parseInt(btn.dataset.offset);
         document.getElementById('movieFilter').value = '';
         document.getElementById('posterBg').classList.remove('visible');
-        document.body.classList.remove('has-poster');
-        loadData();
+                loadData();
       });
     });
   }
@@ -567,27 +568,26 @@
 
   async function updatePoster(title) {
     const bg = document.getElementById('posterBg');
-    if (!title) {
-      bg.classList.remove('visible');
-      document.body.classList.remove('has-poster');
-      return;
-    }
+    if (!title) { bg.classList.remove('visible'); return; }
     try {
-      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(title)}&media=movie&limit=1`);
-      const data = await res.json();
-      if (data.results && data.results.length > 0) {
-        const url = data.results[0].artworkUrl100.replace(/\d+x\d+bb/, '600x600bb');
-        bg.style.backgroundImage = `url("${url}")`;
-        bg.classList.add('visible');
-        document.body.classList.add('has-poster');
-      } else {
-        bg.classList.remove('visible');
-        document.body.classList.remove('has-poster');
-      }
-    } catch {
-      bg.classList.remove('visible');
-      document.body.classList.remove('has-poster');
-    }
+      // Search Wikipedia for the movie page
+      const searchRes = await fetch(
+        `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(title + ' film')}&format=json&origin=*&srlimit=1`
+      );
+      const searchData = await searchRes.json();
+      const hits = searchData?.query?.search;
+      if (!hits?.length) { bg.classList.remove('visible'); return; }
+
+      // Fetch the page summary to get the thumbnail
+      const pageTitle = encodeURIComponent(hits[0].title);
+      const summaryRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${pageTitle}`);
+      const summary = await summaryRes.json();
+      const imgUrl = summary?.thumbnail?.source;
+      if (!imgUrl) { bg.classList.remove('visible'); return; }
+
+      bg.style.backgroundImage = `url("${imgUrl}")`;
+      bg.classList.add('visible');
+    } catch { bg.classList.remove('visible'); }
   }
 
   document.getElementById('cityFilter').addEventListener('change', render);
