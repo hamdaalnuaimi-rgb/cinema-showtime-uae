@@ -14,6 +14,22 @@
       min-height: 100vh;
     }
 
+    /* ── Poster background ── */
+    #posterBg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-size: cover;
+      background-position: center;
+      filter: blur(28px) brightness(0.35) saturate(1.4);
+      transform: scale(1.08);
+      opacity: 0;
+      transition: opacity .5s ease, background-image .4s ease;
+      pointer-events: none;
+    }
+    #posterBg.visible { opacity: 1; }
+    body > *:not(#posterBg) { position: relative; z-index: 1; }
+
     /* ── Header ── */
     header {
       background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 60%, #0f3460 100%);
@@ -263,6 +279,7 @@
 </head>
 <body>
 
+<div id="posterBg"></div>
 <header>
   <div class="header-inner">
     <div>
@@ -345,6 +362,8 @@
     container.querySelectorAll('.date-tab').forEach(btn => {
       btn.addEventListener('click', () => {
         currentOffset = parseInt(btn.dataset.offset);
+        document.getElementById('movieFilter').value = '';
+        document.getElementById('posterBg').classList.remove('visible');
         loadData();
       });
     });
@@ -501,8 +520,29 @@
     }
   }
 
+  // ── Poster background ─────────────────────────────────────────────────────
+
+  async function updatePoster(title) {
+    const bg = document.getElementById('posterBg');
+    if (!title) { bg.classList.remove('visible'); return; }
+    try {
+      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(title)}&media=movie&limit=1`);
+      const data = await res.json();
+      if (data.results && data.results.length > 0) {
+        const url = data.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+        bg.style.backgroundImage = `url("${url}")`;
+        bg.classList.add('visible');
+      } else {
+        bg.classList.remove('visible');
+      }
+    } catch { bg.classList.remove('visible'); }
+  }
+
   document.getElementById('cityFilter').addEventListener('change', render);
-  document.getElementById('movieFilter').addEventListener('change', render);
+  document.getElementById('movieFilter').addEventListener('change', () => {
+    render();
+    updatePoster(document.getElementById('movieFilter').value);
+  });
 
   loadData();
 </script>
