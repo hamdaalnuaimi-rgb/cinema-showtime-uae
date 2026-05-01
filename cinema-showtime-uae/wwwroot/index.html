@@ -12,23 +12,24 @@
       background: #f0f2f5;
       color: #1a1a2e;
       min-height: 100vh;
+      transition: background .5s ease;
     }
+    body.has-poster { background: rgba(10, 10, 20, 0.75); }
 
     /* ── Poster background ── */
     #posterBg {
       position: fixed;
       inset: 0;
-      z-index: 0;
+      z-index: -1;
       background-size: cover;
       background-position: center;
       filter: blur(28px) brightness(0.35) saturate(1.4);
       transform: scale(1.08);
       opacity: 0;
-      transition: opacity .5s ease, background-image .4s ease;
+      transition: opacity .5s ease;
       pointer-events: none;
     }
     #posterBg.visible { opacity: 1; }
-    body > *:not(#posterBg) { position: relative; z-index: 1; }
 
     /* ── Header ── */
     header {
@@ -364,6 +365,7 @@
         currentOffset = parseInt(btn.dataset.offset);
         document.getElementById('movieFilter').value = '';
         document.getElementById('posterBg').classList.remove('visible');
+        document.body.classList.remove('has-poster');
         loadData();
       });
     });
@@ -524,18 +526,27 @@
 
   async function updatePoster(title) {
     const bg = document.getElementById('posterBg');
-    if (!title) { bg.classList.remove('visible'); return; }
+    if (!title) {
+      bg.classList.remove('visible');
+      document.body.classList.remove('has-poster');
+      return;
+    }
     try {
       const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(title)}&media=movie&limit=1`);
       const data = await res.json();
       if (data.results && data.results.length > 0) {
-        const url = data.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+        const url = data.results[0].artworkUrl100.replace(/\d+x\d+bb/, '600x600bb');
         bg.style.backgroundImage = `url("${url}")`;
         bg.classList.add('visible');
+        document.body.classList.add('has-poster');
       } else {
         bg.classList.remove('visible');
+        document.body.classList.remove('has-poster');
       }
-    } catch { bg.classList.remove('visible'); }
+    } catch {
+      bg.classList.remove('visible');
+      document.body.classList.remove('has-poster');
+    }
   }
 
   document.getElementById('cityFilter').addEventListener('change', render);
