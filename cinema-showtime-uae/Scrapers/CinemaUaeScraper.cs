@@ -69,13 +69,11 @@ public class CinemaUaeScraper : ICinemaScraper
         return new CinemaResult(ChainName, movieResults);
     }
 
-    // Site tab order: tab1=tomorrow, tab2=today, tab3=day-after-tomorrow
+    // Each cinema page embeds 3 day-tabs: showtimestab1=today, tab2=tomorrow, tab3=day after
     private static string ExtractTabContent(string html, int dateOffset)
     {
-        int[] tabNums = { 2, 1, 3 };
-        var tabNum  = tabNums[dateOffset];
-        var tabId   = $"showtimestab{tabNum}";
-        var nextId  = $"showtimestab{tabNum + 1}";
+        var tabId   = $"showtimestab{dateOffset + 1}";
+        var nextId  = $"showtimestab{dateOffset + 2}";
 
         var start = html.IndexOf($"id=\"{tabId}\"", StringComparison.Ordinal);
         if (start < 0) return html;
