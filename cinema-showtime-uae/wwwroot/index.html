@@ -409,6 +409,7 @@
   </div>
   <div id="results" style="display:none">
     <div id="movieInfoCard"></div>
+    <div id="cinemaListings"></div>
   </div>
 </main>
 
@@ -532,7 +533,7 @@
   function render() {
     const city  = document.getElementById('cityFilter').value;
     const movie = document.getElementById('movieFilter').value;
-    const container = document.getElementById('results');
+    const container = document.getElementById('cinemaListings');
 
     let totalLocations = 0, totalChains = 0;
     const html = [];
