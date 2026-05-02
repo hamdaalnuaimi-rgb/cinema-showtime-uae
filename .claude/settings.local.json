@@ -44,7 +44,11 @@
       "WebFetch(domain:www.roxycinemas.ae)",
       "WebFetch(domain:www.starcinemas.ae)",
       "Bash(curl *)",
-      "Bash(pkill -f \"dotnet run\")"
+      "Bash(pkill -f \"dotnet run\")",
+      "Bash(lsof -ti:5000)",
+      "Bash(xargs kill *)",
+      "Bash(jobs)",
+      "Bash(kill -9 17369)"
     ]
   }
 }

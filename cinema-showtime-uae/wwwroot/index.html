@@ -337,6 +337,12 @@
       color: #1a1a2e;
       margin-bottom: 10px;
     }
+    .movie-info-rating {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #f5a623;
+      margin-bottom: 8px;
+    }
     .movie-info-description {
       font-size: 0.9rem;
       line-height: 1.5;
@@ -694,6 +700,17 @@
     card.classList.add('show');
 
     try {
+      let rating = null;
+      if (rawData) {
+        for (const cinema of rawData.cinemas) {
+          const movie = cinema.movies.find(m => m.title === title);
+          if (movie && movie.rating) {
+            rating = movie.rating;
+            break;
+          }
+        }
+      }
+
       const searchRes = await fetch(
         `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(title + ' film')}&format=json&origin=*&srlimit=1`
       );
@@ -718,6 +735,7 @@
           </div>
           <div class="movie-info-content">
             <div class="movie-info-title">${esc(title)}</div>
+            ${rating ? `<div class="movie-info-rating">⭐ IMDb Rating: ${esc(rating)}/10</div>` : ''}
             ${description ? `<div class="movie-info-description">${esc(description)}</div>` : '<div class="movie-info-error">No description available.</div>'}
           </div>
         </div>`;

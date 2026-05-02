@@ -18,6 +18,12 @@ builder.Services.AddHttpClient("CinemaUae", c =>
     c.DefaultRequestHeaders.Add("User-Agent",
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
 });
+builder.Services.AddHttpClient<ImdbRatingFetcher>(c =>
+{
+    c.Timeout = TimeSpan.FromSeconds(15);
+    c.DefaultRequestHeaders.Add("User-Agent",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+});
 
 // Register one scraper per UAE cinema chain
 // Args: (displayName, cinemauae.com slug, chain keyword in anchor text)
