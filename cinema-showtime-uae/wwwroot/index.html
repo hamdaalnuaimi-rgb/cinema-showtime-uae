@@ -296,77 +296,62 @@
       text-decoration: line-through;
     }
 
-    /* ── Modal ── */
-    .modal {
+    /* ── Movie Info Card ── */
+    #movieInfoCard {
       display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 1000;
-      background: rgba(0, 0, 0, 0.7);
-      animation: fadeIn .2s ease;
-    }
-    .modal.show { display: flex; }
-    .modal-content {
       background: #fff;
-      border-radius: 16px;
-      max-width: 500px;
-      width: 90%;
-      max-height: 85vh;
-      overflow-y: auto;
-      position: relative;
-      margin: auto;
-      animation: slideUp .3s ease;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      overflow: hidden;
+      margin-bottom: 28px;
+      animation: slideDown .3s ease;
     }
-    .modal-close {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      background: rgba(0, 0, 0, 0.5);
-      border: none;
-      color: #fff;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      font-size: 24px;
-      cursor: pointer;
+    #movieInfoCard.show { display: flex; }
+    .movie-info-container {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background .2s;
-      z-index: 10;
+      gap: 20px;
+      padding: 20px;
     }
-    .modal-close:hover { background: rgba(0, 0, 0, 0.7); }
-    .modal-poster {
-      width: 100%;
-      height: auto;
-      display: block;
-      border-radius: 16px 16px 0 0;
+    .movie-info-poster {
+      flex-shrink: 0;
+      width: 140px;
+      height: 210px;
       background: #f0f2f5;
-      aspect-ratio: 3/4;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .movie-info-poster img {
+      width: 100%;
+      height: 100%;
       object-fit: cover;
     }
-    .modal-body {
-      padding: 24px;
+    .movie-info-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
-    .modal-title {
-      font-size: 1.5rem;
+    .movie-info-title {
+      font-size: 1.3rem;
       font-weight: 700;
       color: #1a1a2e;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
-    .modal-description {
-      font-size: 0.95rem;
-      line-height: 1.6;
+    .movie-info-description {
+      font-size: 0.9rem;
+      line-height: 1.5;
       color: #475569;
-      margin-bottom: 16px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
-    .modal-loading {
+    .movie-info-loading {
       text-align: center;
       padding: 24px;
       color: #94a3b8;
     }
-    .modal-error {
+    .movie-info-error {
       background: #fff1f2;
       border: 1px solid #fecdd3;
       border-radius: 8px;
@@ -374,8 +359,7 @@
       color: #be123c;
       font-size: 0.9rem;
     }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes slideDown { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
     @media (max-width: 600px) {
       header h1 { font-size: 1.2rem; }
@@ -390,17 +374,6 @@
 <body>
 
 <div id="posterBg"></div>
-
-<div id="movieModal" class="modal">
-  <div class="modal-content">
-    <button class="modal-close">&times;</button>
-    <img id="modalPoster" class="modal-poster" alt="Movie poster" />
-    <div class="modal-body">
-      <div class="modal-title" id="modalTitle"></div>
-      <div id="modalInfo"></div>
-    </div>
-  </div>
-</div>
 
 <header>
   <div class="header-inner">
@@ -434,7 +407,9 @@
     <div class="spinner"></div>
     <p>Fetching today's showtimes across all UAE cinemas…</p>
   </div>
-  <div id="results" style="display:none"></div>
+  <div id="results" style="display:none">
+    <div id="movieInfoCard"></div>
+  </div>
 </main>
 
 <script>
@@ -704,23 +679,18 @@
     }
   }
 
-  // ── Movie Info Modal ──────────────────────────────────────────────────────
+  // ── Movie Info Card ──────────────────────────────────────────────────────
 
-  async function showMovieModal(title) {
-    const modal = document.getElementById('movieModal');
-    const infoDiv = document.getElementById('modalInfo');
-    const posterImg = document.getElementById('modalPoster');
-    const titleDiv = document.getElementById('modalTitle');
-
-    titleDiv.textContent = title || 'Movie Details';
-    infoDiv.innerHTML = '<div class="modal-loading">Loading...</div>';
-    posterImg.src = '';
-    modal.classList.add('show');
+  async function showMovieInfo(title) {
+    const card = document.getElementById('movieInfoCard');
 
     if (!title) {
-      modal.classList.remove('show');
+      card.classList.remove('show');
       return;
     }
+
+    card.innerHTML = '<div class="movie-info-loading">Loading movie information…</div>';
+    card.classList.add('show');
 
     try {
       const searchRes = await fetch(
@@ -729,7 +699,7 @@
       const searchData = await searchRes.json();
       const hits = searchData?.query?.search;
       if (!hits?.length) {
-        infoDiv.innerHTML = '<div class="modal-error">No information found for this movie.</div>';
+        card.innerHTML = '<div class="movie-info-error">No information found for this movie.</div>';
         return;
       }
 
@@ -738,32 +708,29 @@
       const summary = await summaryRes.json();
 
       const imgUrl = summary?.thumbnail?.source;
-      if (imgUrl) posterImg.src = imgUrl;
-
       const description = summary?.extract;
-      infoDiv.innerHTML = description
-        ? `<div class="modal-description">${esc(description)}</div>`
-        : '<div class="modal-error">No description available.</div>';
+
+      card.innerHTML = `
+        <div class="movie-info-container">
+          <div class="movie-info-poster">
+            ${imgUrl ? `<img src="${imgUrl}" alt="${esc(title)}" />` : '<div style="background: #f0f2f5; width: 100%; height: 100%;"></div>'}
+          </div>
+          <div class="movie-info-content">
+            <div class="movie-info-title">${esc(title)}</div>
+            ${description ? `<div class="movie-info-description">${esc(description)}</div>` : '<div class="movie-info-error">No description available.</div>'}
+          </div>
+        </div>`;
     } catch (err) {
-      infoDiv.innerHTML = `<div class="modal-error">Failed to load movie information: ${esc(err.message)}</div>`;
+      card.innerHTML = `<div class="movie-info-error">Failed to load movie information: ${esc(err.message)}</div>`;
     }
   }
-
-  function closeMovieModal() {
-    document.getElementById('movieModal').classList.remove('show');
-  }
-
-  document.getElementById('movieModal').addEventListener('click', (e) => {
-    if (e.target.id === 'movieModal') closeMovieModal();
-  });
-  document.querySelector('.modal-close').addEventListener('click', closeMovieModal);
 
   document.getElementById('cityFilter').addEventListener('change', render);
   document.getElementById('movieFilter').addEventListener('change', () => {
     const selectedMovie = document.getElementById('movieFilter').value;
     render();
     updatePoster(selectedMovie);
-    if (selectedMovie) showMovieModal(selectedMovie);
+    if (selectedMovie) showMovieInfo(selectedMovie);
   });
 
   loadData();

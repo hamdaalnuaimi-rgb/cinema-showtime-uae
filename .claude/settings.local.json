@@ -43,7 +43,8 @@
       "WebFetch(domain:www.voxcinemas.com)",
       "WebFetch(domain:www.roxycinemas.ae)",
       "WebFetch(domain:www.starcinemas.ae)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(pkill -f \"dotnet run\")"
     ]
   }
 }
